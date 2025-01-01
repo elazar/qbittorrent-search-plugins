@@ -26,6 +26,7 @@ import json
 from novaprinter import prettyPrinter
 from urllib.parse import urlencode
 
+
 class cloudtorrents(object):
     url = "https://cloudtorrents.com"
     name = "CloudTorrents"
@@ -40,9 +41,10 @@ class cloudtorrents(object):
         "tv": "8",
     }
 
+    def quote_via(self, string, safe="/", encoding=None, errors=None):
+        return str(string, "utf-8") if isinstance(string, bytes) else string
+
     def search(self, what, cat="all"):
-        quote_via=lambda string, safe="/", encoding=None, errors=None: \
-            str(string, "utf-8") if isinstance(string, bytes) else string
         query = {
             "offset": 0,
             "limit": 50,
@@ -52,7 +54,8 @@ class cloudtorrents(object):
             query["torrent_type"] = self.supported_categories[cat]
         items = []
         while True:
-            url = "https://api.cloudtorrents.com/search/?" + urlencode(query, quote_via=quote_via)
+            url = "https://api.cloudtorrents.com/search/?" \
+                + urlencode(query, quote_via=self.quote_via)
             encoded = retrieve_url(url)
             decoded = json.loads(encoded)
             for result in decoded["results"]:
@@ -72,10 +75,9 @@ class cloudtorrents(object):
                     "pub_date": pub_date,
                 }
                 items.append(item)
-            if decoded["next"] == None:
+            if decoded["next"] is None:
                 break
             query["offset"] += query["limit"]
         items.sort(reverse=True, key=lambda item: item["seeds"])
         for item in items:
             prettyPrinter(item)
-
